@@ -1,0 +1,180 @@
+# Aide affichée dans le chat avec Q (drop) sur une entrée du GUI admin.
+# Les chemins contenant * couvrent les identifiants et tiers définis dans les fichiers.
+help:
+  settings:
+    custom-fish-chance:
+      description: Pourcentage de chance qu'une prise soit un poisson personnalisé.
+      options:
+        - Nombre entre 0 et 100.
+    custom-fish-item:
+      description: Matériau Minecraft utilisé pour représenter le poisson custom.
+      options:
+        - Nom d'un matériau item valide, par exemple COD, SALMON ou PAPER.
+    fishing.bite-window-ticks:
+      description: Durée de validité d'une touche avant le rembobinage, en ticks.
+      options:
+        - Entier de 1 à 1200 (20 ticks = 1 seconde).
+    fishing.hook-spacing:
+      description: Espacement de base entre les bouchons supplémentaires.
+      options:
+        - Nombre décimal de 0.1 à 32.
+    fishing.hook-spacing-step:
+      description: Écart additionnel entre les rangées de bouchons.
+      options:
+        - Nombre décimal de 0 à 32.
+    fishing.hook-stagger:
+      description: Décalage alterné des bouchons supplémentaires.
+      options:
+        - Nombre décimal entre -32 et 32.
+    fishing.debug:
+      description: Active les traces de diagnostic de pêche dans la console.
+      options:
+        - true pour activer, false pour désactiver.
+    fishing-tools.enabled:
+      description: Active ou désactive les cercles de rareté persistants.
+      options:
+        - true pour activer, false pour désactiver.
+    fishing-tools.zone.pos*.world:
+      description: Nom du monde où se trouve le coin de la zone.
+      options:
+        - Les deux coins pos1 et pos2 doivent utiliser le même monde chargé.
+    fishing-tools.zone.pos*.x:
+      description: Coordonnée X du coin de la zone.
+      options:
+        - Entier correspondant à la coordonnée de bloc.
+    fishing-tools.zone.pos*.z:
+      description: Coordonnée Z du coin de la zone.
+      options:
+        - Entier correspondant à la coordonnée de bloc.
+    rarity-chances.*:
+      description: Poids de tirage configuré pour cette rareté de poisson.
+      options:
+        - Nombre entre 0 et 100 ; le GUI redistribue le reste entre les autres raretés.
+    rarity-colors.*:
+      description: Code couleur Minecraft de la rareté affichée dans le nom et le lore du poisson.
+      options:
+        - Code couleur legacy, par exemple '&7', '&b', '&5', '&6' ou '&d'.
+    messages.fish-name:
+      description: Modèle du nom affiché sur l'objet poisson.
+      options:
+        - Texte avec codes couleur '&'.
+        - "Placeholders disponibles : {name}, {id}, {rarity}, {weight}, {weight_g}, {rarity_color}."
+    messages.fish-rarity:
+      description: Ligne de rareté affichée dans le lore du poisson.
+      options:
+        - Texte avec codes couleur '&'.
+        - "Placeholders disponibles : {name}, {id}, {rarity}, {weight}, {weight_g}, {rarity_color}."
+    messages.fish-weight:
+      description: Ligne de poids affichée dans le lore du poisson.
+      options:
+        - Texte avec codes couleur '&'.
+        - "Placeholders disponibles : {name}, {id}, {rarity}, {weight}, {weight_g}, {rarity_color}."
+    vente.prix-par-kg:
+      description: Prix de repli par kilogramme si aucun prix spécifique à la rareté n'est défini.
+      options:
+        - Nombre décimal positif ou nul.
+    vente.symbole:
+      description: Symbole ajouté à la valeur de vente du poisson.
+      options:
+        - Texte libre, par exemple '$' ou ' pièces'.
+    vente.prix-de-base-par-rarete.*:
+      description: Prix de base ajouté au prix calculé avec le poids pour cette rareté.
+      options:
+        - Nombre décimal positif ou nul.
+    vente.prix-par-rarete.*:
+      description: Prix par kilogramme appliqué aux poissons de cette rareté.
+      options:
+        - Nombre décimal positif ou nul.
+
+  fish:
+    fishes.*.name:
+      description: Nom affiché pour cette espèce de poisson.
+      options:
+        - Texte libre.
+    fishes.*.rarity:
+      description: Rareté de cette espèce.
+      options:
+        - BASIQUE, BRILLANT, EPIQUE, LEGENDAIRE ou MYSTIQUE.
+    fishes.*.wmin:
+      description: Poids minimal de l'espèce, en kilogrammes.
+      options:
+        - Nombre décimal positif ; doit être inférieur ou égal à wmax.
+    fishes.*.wmax:
+      description: Poids maximal de l'espèce, en kilogrammes.
+      options:
+        - Nombre décimal supérieur ou égal à wmin.
+    fishes.*.model:
+      description: Identifiant du modèle 3D de l'objet poisson.
+      options:
+        - Identifiant NamespacedKey, par exemple elestya:fish_rond_01.
+    fishes.*.texture:
+      description: Identifiant de texture associé à l'espèce.
+      options:
+        - Texte libre ou identifiant du resource pack.
+
+  rod:
+    default.weight-multiplier:
+      description: Multiplicateur de poids par défaut des cannes.
+      options:
+        - Nombre décimal strictement supérieur à 0.
+    default.max-uses:
+      description: Nombre d'utilisations par défaut ; zéro signifie illimité.
+      options:
+        - Entier positif ou nul.
+    lore:
+      description: Ligne de lore configurable indiquant les utilisations de la canne.
+      options:
+        - Texte avec codes couleur '&'.
+        - "{uses} ou {remaining} affiche les utilisations restantes."
+        - "{max-uses} ou {maxUse} affiche la limite ; zéro est affiché comme ∞."
+    tiers.*.name:
+      description: Nom affiché pour cette canne.
+      options:
+        - Texte avec codes couleur '&'.
+    tiers.*.item-model:
+      description: Modèle d'objet NamespacedKey de la canne.
+      options:
+        - Identifiant NamespacedKey, par exemple elestya:rod_mystique.
+        - Texte vide pour utiliser le modèle vanilla.
+    tiers.*.custom-fish-chance-bonus:
+      description: Bonus de chance de poisson custom pour ce tier, en points de pourcentage.
+      options:
+        - Nombre entre 0 et 100.
+    tiers.*.weight-multiplier:
+      description: Multiplicateur de poids des poissons pour ce tier.
+      options:
+        - Nombre décimal strictement supérieur à 0.
+    tiers.*.max-uses:
+      description: Nombre d'utilisations de la canne de ce tier ; zéro signifie illimité.
+      options:
+        - Entier positif ou nul.
+    tiers.*.enchants.*:
+      description: Niveau de l'enchantement custom appliqué à cette canne.
+      options:
+        - Entier de 1 au niveau maximal déclaré dans enchant.yml.
+
+  enchant:
+    enchants.*.display-name:
+      description: Nom affiché pour l'enchantement custom.
+      options:
+        - Texte avec codes couleur '&'.
+        - Identifiant dans enchants.* libre, composé de lettres minuscules, chiffres, tirets ou underscores.
+    enchants.*.max-level:
+      description: Niveau maximal autorisé pour cet enchantement.
+      options:
+        - Entier positif ; les niveaux de rod.yml ne doivent pas le dépasser.
+        - Un livre est généré automatiquement pour chaque niveau présent dans levels.
+        - /adminpeche books donne tous les livres définis dans enchant.yml.
+        - Les livres s'appliquent sur une canne avec une enclume.
+    enchants.*.levels.*.custom-fish-chance-bonus:
+      description: Bonus de chance de poisson custom accordé à ce niveau.
+      options:
+        - Nombre entre 0 et 100, en points de pourcentage.
+    enchants.*.levels.*.weight-bias:
+      description: Biais vers le poids maximal de l'espèce à ce niveau.
+      options:
+        - Nombre entre 0 et 1.
+    enchants.*.levels.*.hooks-per-catch:
+      description: Nombre de bouchons générés par cet enchantement à ce niveau.
+      options:
+        - Entier entre 1 et 5 ; les enchantements se cumulent jusqu'à 5.
