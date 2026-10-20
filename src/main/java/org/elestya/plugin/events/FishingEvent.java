@@ -47,6 +47,15 @@ public class FishingEvent implements Listener {
             }
             ItemStack rod = player.getInventory().getItemInMainHand();
             manager.removeVisualHooks(playerId);
+            int rodTier = manager.getRodTier(player);
+            int remainingUses = manager.pecheConfiguration().getRodUsesRemaining(rod, rodTier);
+            if (remainingUses == 0) {
+                e.setCancelled(true);
+                eventHook.remove();
+                player.sendMessage(Component.text("Cette canne n'a plus d'utilisations."));
+                return;
+            }
+            player.getInventory().setItemInMainHand(rod);
             int hooksPerCatch = manager.pecheConfiguration().getHooksPerCatch(rod);
             if (hooksPerCatch > 1 && !e.isCancelled()) {
                 manager.launchVisualHooks(player, eventHook, hooksPerCatch);
@@ -88,8 +97,13 @@ public class FishingEvent implements Listener {
         if (state == PlayerFishEvent.State.CAUGHT_FISH && e.getCaught() instanceof Item caught) {
             ItemStack vanillaCatch = caught.getItemStack().clone();
             fallback = vanillaCatch;
-            ItemStack result = manager.createCustomFish(rod, rodTier);
+            ItemStack result = manager.createCustomFish(rod, rodTier, eventHook.getLocation());
             caught.setItemStack(result != null ? result : vanillaCatch);
+            manager.sendCatchMessage(player, result);
+        }
+
+        if (state == PlayerFishEvent.State.CAUGHT_FISH) {
+            manager.consumeRodUse(player, rod, rodTier);
         }
 
         if (state == PlayerFishEvent.State.REEL_IN || state == PlayerFishEvent.State.CAUGHT_FISH) {
@@ -158,7 +172,7 @@ public class FishingEvent implements Listener {
 
             @Override
             public void run() {
-                if (!hook.isValid() || tick >= FishingManager.BITE_WINDOW_TICKS / 2) {
+                if (!hook.isValid() || tick >= manager.biteWindowTicks() / 2) {
                     alert.remove();
                     cancel();
                     return;

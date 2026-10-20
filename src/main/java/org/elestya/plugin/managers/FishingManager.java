@@ -1,11 +1,14 @@
 package org.elestya.plugin.managers;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.FishHook;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -14,6 +17,8 @@ import org.elestya.plugin.ressources.FishRessourceLoader;
 import org.elestya.plugin.ressources.PecheConfiguration;
 import org.elestya.plugin.sources.Fish;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -27,22 +32,8 @@ public class FishingManager {
     private final NamespacedKey visualBobberKey;
     private final FishRessourceLoader fishLoader;
     private final PecheConfiguration pecheConfiguration;
+    private final FishingZoneManager fishingZoneManager;
 
-
-    /** Affiche dans la console ce qui se passe à chaque touche / rembobinage. */
-    private static final boolean DEBUG = true;
-
-
-    public FishingManager(JavaPlugin plugin, PecheConfiguration pecheConfiguration, FishRessourceLoader fishLoader){
-        this.plugin = Objects.requireNonNull(plugin);
-        this.fishLoader = Objects.requireNonNull(fishLoader);
-        this.fishIdKey = new NamespacedKey(plugin, "fish_id");
-        this.rarityKey = new NamespacedKey(plugin, "fish_rarity");
-        this.weightKey = new NamespacedKey(plugin, "fish_weight");
-        this.rodTierKey = new NamespacedKey(plugin, "rod_tier");
-        this.visualBobberKey = new NamespacedKey(plugin, "multi_hamecon_visual");
-        this.pecheConfiguration = Objects.requireNonNull(pecheConfiguration);
-    }
 
     private final Map<UUID, List<VisualBobber>> visualHooks = new HashMap<>();
     private final Map<UUID, BukkitTask> visualHookTasks = new HashMap<>();
@@ -50,14 +41,18 @@ public class FishingManager {
     /** UUID du hook -> tick de la dernière touche. */
     public final Map<UUID, Integer> biteTicks = new HashMap<>();
 
-    /** Durée (en ticks) pendant laquelle une touche reste valide, comme le "nibble" vanilla (20 à 40 ticks). */
-    public static final int BITE_WINDOW_TICKS = 60;
-
-    /** Écart latéral du premier hook rajouté, puis pas supplémentaire à chaque "rang" (en blocs). */
-    private static final double HOOK_SPACING = 5;
-    private static final double HOOK_SPACING_STEP = 5;
-    /** Décalage avant/arrière alterné pour éviter un alignement parfait (en blocs). */
-    private static final double HOOK_STAGGER = 5;
+    public FishingManager(JavaPlugin plugin, PecheConfiguration pecheConfiguration, FishRessourceLoader fishLoader,
+                          FishingZoneManager fishingZoneManager) {
+        this.plugin = Objects.requireNonNull(plugin);
+        this.fishLoader = Objects.requireNonNull(fishLoader);
+        this.fishingZoneManager = Objects.requireNonNull(fishingZoneManager);
+        this.fishIdKey = new NamespacedKey(plugin, "fish_id");
+        this.rarityKey = new NamespacedKey(plugin, "fish_rarity");
+        this.weightKey = new NamespacedKey(plugin, "fish_weight");
+        this.rodTierKey = new NamespacedKey(plugin, "rod_tier");
+        this.visualBobberKey = new NamespacedKey(plugin, "multi_hamecon_visual");
+        this.pecheConfiguration = Objects.requireNonNull(pecheConfiguration);
+    }
 
     public void clearAllVisualHooks() {
         for (UUID playerId : new ArrayList<>(visualHooks.keySet())) {
@@ -105,11 +100,11 @@ public class FishingManager {
                 continue;
             }
             Integer biteTick = biteTicks.remove(hook.getUniqueId());
-            if (DEBUG) {
+            if (debugMode()) {
                 plugin.getLogger().info("[peche] hook " + hook.getUniqueId() + " visuel=" + isVisualHook(hook)
                         + " touche=" + (biteTick == null ? "aucune" : (now - biteTick) + " ticks"));
             }
-            if (biteTick == null || now - biteTick > BITE_WINDOW_TICKS) {
+            if (biteTick == null || now - biteTick > biteWindowTicks()) {
                 continue;
             }
             dropCatch(player, hook, rod, rodTier, fallback);
@@ -117,7 +112,7 @@ public class FishingManager {
     }
 
     public void dropCatch(Player player, FishHook hook, ItemStack rod, int rodTier, ItemStack fallback) {
-        ItemStack result = createCustomFish(rod, rodTier);
+        ItemStack result = createCustomFish(rod, rodTier, hook.getLocation());
         if (result == null) {
             result = fallback.clone();
         }
@@ -128,6 +123,27 @@ public class FishingManager {
         velocity.setY(velocity.getY() + Math.sqrt(distance) * 0.08);
         hook.getWorld().dropItem(hookLocation, result, item -> item.setVelocity(velocity));
         player.giveExp(ThreadLocalRandom.current().nextInt(1, 7));
+        sendCatchMessage(player, result);
+        consumeRodUse(player, rod, rodTier);
+    }
+
+    public void consumeRodUse(Player player, ItemStack rod, int rodTier) {
+        int remaining = pecheConfiguration.consumeRodUse(rod, rodTier);
+        if (remaining == -2) {
+            return;
+        }
+        if (remaining >= 0 && managerRodIsInHand(player, rodTier)) {
+            if (remaining == 0) {
+                player.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
+                player.sendMessage(Component.text("Votre canne est épuisée."));
+            } else {
+                player.getInventory().setItemInMainHand(rod);
+            }
+        }
+    }
+
+    private boolean managerRodIsInHand(Player player, int rodTier) {
+        return rodTier > 0 && getRodTier(player) == rodTier;
     }
 
     public void launchVisualHooks(Player player, FishHook mainHook, int hooksPerCatch) {
@@ -155,8 +171,9 @@ public class FishingManager {
                 int directionSign = i % 2 == 1 ? 1 : -1;
                 int spread = (i + 1) / 2;
                 Vector offset = side.clone()
-                        .multiply(directionSign * (HOOK_SPACING + (spread - 1) * HOOK_SPACING_STEP))
-                        .add(forward.clone().multiply(((i % 3) - 1) * HOOK_STAGGER));
+                        .multiply(directionSign * (pecheConfiguration.getHookSpacing()
+                                + (spread - 1) * pecheConfiguration.getHookSpacingStep()))
+                        .add(forward.clone().multiply(((i % 3) - 1) * pecheConfiguration.getHookStagger()));
                 extras.add(new VisualBobber(createVisualHook(player, mainHook, offset), offset));
             }
             visualHooks.put(playerId, extras);
@@ -226,6 +243,10 @@ public class FishingManager {
     }
 
     public ItemStack createCustomFish(ItemStack rod, int rodTier) {
+        return createCustomFish(rod, rodTier, null);
+    }
+
+    public ItemStack createCustomFish(ItemStack rod, int rodTier, Location catchLocation) {
         var fishes = fishLoader.getAll();
         double customChance = pecheConfiguration.getCustomFishChance(rodTier, rod);
         if (fishes.isEmpty() || customChance <= 0
@@ -233,7 +254,8 @@ public class FishingManager {
             return null;
         }
 
-        Fish fish = pecheConfiguration.selectFish(fishes).orElse(null);
+        Fish fish = pecheConfiguration.selectFish(fishes,
+                fishingZoneManager.getRarityAt(catchLocation)).orElse(null);
         double weightMultiplier = pecheConfiguration.getWeightMultiplier(rodTier);
         if (fish == null || weightMultiplier <= 0) {
             return null;
@@ -243,15 +265,12 @@ public class FishingManager {
             return null;
         }
 
-        long weightPrecision = fish.wmax() < 1 ? 100 : 10;
-        long minWeight = (long) Math.ceil(fish.wmin() * weightPrecision - 1.0e-9);
-        long maxWeight = (long) Math.floor(fish.wmax() * weightPrecision + 1.0e-9);
         double weightRoll = ThreadLocalRandom.current().nextDouble();
         double weightBias = pecheConfiguration.getWeightBias(rod);
         double biasedRoll = 1 - Math.pow(1 - weightRoll, 1 + weightBias * 4);
-        long baseWeight = minWeight + Math.round((maxWeight - minWeight) * biasedRoll);
-        double weight = Math.min(fish.wmax(), Math.max(fish.wmin(),
-                Math.round(baseWeight * weightMultiplier) / (double) weightPrecision));
+        double baseWeight = fish.wmin() + (fish.wmax() - fish.wmin()) * biasedRoll;
+        double weight = Math.clamp(baseWeight * weightMultiplier, fish.wmin(), fish.wmax());
+        weight = Math.clamp(Math.round(weight * 1000) / 1000.0, fish.wmin(), fish.wmax());
         ItemStack result = new ItemStack(customFishMaterial.get());
         var meta = result.getItemMeta();
         meta.displayName(pecheConfiguration.getFishDisplayName(fish, weight));
@@ -278,13 +297,67 @@ public class FishingManager {
         return tier;
     }
 
-    public boolean debugMode(){
-        return DEBUG;
+    public void sendCatchMessage(Player player, ItemStack item) {
+        if (item == null || !item.hasItemMeta()) {
+            return;
+        }
+        ItemMeta meta = item.getItemMeta();
+        var pdc = meta.getPersistentDataContainer();
+        String fishId = pdc.get(fishIdKey, PersistentDataType.STRING);
+        String rarityName = pdc.get(rarityKey, PersistentDataType.STRING);
+        Double weight = pdc.get(weightKey, PersistentDataType.DOUBLE);
+        if (fishId == null || rarityName == null || weight == null) {
+            return; // pas un poisson custom
+        }
+
+        Component name = meta.hasDisplayName() ? meta.displayName() : Component.text(fishId);
+        String rarity = rarityName.substring(0, 1).toUpperCase(Locale.ROOT)
+                + rarityName.substring(1).toLowerCase(Locale.ROOT);
+        double price = pecheConfiguration.getSellPrice(rarityName, weight);
+
+        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.FRANCE);
+        String weightText = new DecimalFormat("#,##0", symbols).format(Math.round(weight * 1000));
+        String priceText = new DecimalFormat("#,##0.00", symbols).format(price);
+
+        player.sendMessage(Component.text("🎣 Vous avez pêché ", NamedTextColor.GRAY)
+                .append(name)
+                .append(Component.text(" | Rareté : ", NamedTextColor.DARK_GRAY))
+                .append(Component.text(rarity, NamedTextColor.GOLD))
+                .append(Component.text(" | Poids : ", NamedTextColor.DARK_GRAY))
+                .append(Component.text(weightText + " g", NamedTextColor.AQUA))
+                .append(Component.text(" | Valeur : ", NamedTextColor.DARK_GRAY))
+                .append(Component.text(priceText + " " + pecheConfiguration.getCurrencySymbol(),
+                        NamedTextColor.GREEN)));
     }
 
+    public boolean debugMode(){
+        return pecheConfiguration.isFishingDebugEnabled();
+    }
+
+    public int biteWindowTicks() {
+        return pecheConfiguration.getBiteWindowTicks();
+    }
 
     public PecheConfiguration pecheConfiguration(){
         return this.pecheConfiguration;
+    }
+
+    public double getSellPrice(ItemStack item){
+
+        if (item == null || !item.hasItemMeta()) {
+            return 0;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        var pdc = meta.getPersistentDataContainer();
+
+        String rarityName = pdc.get(rarityKey, PersistentDataType.STRING);
+        Double weight = pdc.get(weightKey, PersistentDataType.DOUBLE);
+        if (rarityName == null || weight == null) {
+            return 0; // pas un poisson custom donc 0
+        }
+
+        return pecheConfiguration.getSellPrice(rarityName, weight);
     }
 
 }

@@ -19,15 +19,7 @@ import org.elestya.plugin.sources.FishRarity;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class PecheConfiguration {
@@ -37,6 +29,8 @@ public final class PecheConfiguration {
     private final File rodFile;
     private final FishingEnchantments fishingEnchantments;
     private final NamespacedKey rodTierKey;
+    private final NamespacedKey rodMaxUsesKey;
+    private final NamespacedKey rodUsesRemainingKey;
     private final Set<String> warnedSettings = new HashSet<>();
     private FileConfiguration settingsConfig;
     private FileConfiguration rodConfig;
@@ -47,6 +41,8 @@ public final class PecheConfiguration {
         this.settingsFile = new File(plugin.getDataFolder(), "settings.yml");
         this.rodFile = new File(plugin.getDataFolder(), "rod.yml");
         this.rodTierKey = new NamespacedKey(plugin, "rod_tier");
+        this.rodMaxUsesKey = new NamespacedKey(plugin, "rod_max_uses");
+        this.rodUsesRemainingKey = new NamespacedKey(plugin, "rod_uses_remaining");
         reload();
     }
 
@@ -73,24 +69,27 @@ public final class PecheConfiguration {
     }
 
     public Optional<Fish> selectFish(Collection<Fish> fishes) {
+        return selectFish(fishes, null);
+    }
+
+    public Optional<Fish> selectFish(Collection<Fish> fishes, FishRarity preferredRarity) {
         Map<FishRarity, Double> rarityChances = new EnumMap<>(FishRarity.class);
         double totalChance = 0;
         for (FishRarity rarity : FishRarity.values()) {
             double chance = getPercentage(settingsConfig, "rarity-chances." + rarity.name());
+            if (rarity == preferredRarity) {
+                chance *= 1 + rarity.ordinal() * 2;
+            }
             if (chance > 0) {
                 rarityChances.put(rarity, chance);
                 totalChance += chance;
             }
         }
-        if (totalChance <= 0 || totalChance > 100) {
-            if (totalChance > 100) {
-                warnSetting("settings.yml:rarity-chances",
-                        "La somme des probabilités de rareté dépasse 100 %. Prises vanilla utilisées.");
-            }
+        if (totalChance <= 0) {
             return Optional.empty();
         }
 
-        double roll = ThreadLocalRandom.current().nextDouble(100);
+        double roll = ThreadLocalRandom.current().nextDouble(Math.max(100, totalChance));
         for (Map.Entry<FishRarity, Double> entry : rarityChances.entrySet()) {
             roll -= entry.getValue();
             if (roll < 0) {
@@ -121,6 +120,34 @@ public final class PecheConfiguration {
         return fishingEnchantments.getHooksPerCatch(rod);
     }
 
+    public int getBiteWindowTicks() {
+        return getIntegerSetting("fishing.bite-window-ticks", 60, 1, 1200);
+    }
+
+    public double getHookSpacing() {
+        return getDecimalSetting("fishing.hook-spacing", 5.0, 0.1, 32.0);
+    }
+
+    public double getHookSpacingStep() {
+        return getDecimalSetting("fishing.hook-spacing-step", 5.0, 0.0, 32.0);
+    }
+
+    public double getHookStagger() {
+        return getDecimalSetting("fishing.hook-stagger", 5.0, -32.0, 32.0);
+    }
+
+    public boolean isFishingDebugEnabled() {
+        String path = "fishing.debug";
+        if (!settingsConfig.isBoolean(path)) {
+            if (settingsConfig.contains(path)) {
+                warnSetting("settings.yml:" + path,
+                        path + " doit être un booléen. Valeur par défaut utilisée.");
+            }
+            return true;
+        }
+        return settingsConfig.getBoolean(path);
+    }
+
     public double getWeightMultiplier(int rodTier) {
         String path = rodTier == 0
                 ? "default.weight-multiplier"
@@ -137,6 +164,105 @@ public final class PecheConfiguration {
             return 0;
         }
         return multiplier;
+    }
+
+    public int getRodMaxUses(int rodTier) {
+        String tierPath = "tiers." + rodTier + ".max-uses";
+        String path = rodConfig.contains(tierPath) ? tierPath : "default.max-uses";
+        int defaultValue = 100;
+        if (!rodConfig.isInt(path)) {
+            if (rodConfig.contains(path)) {
+                warnSetting("rod.yml:" + path,
+                        path + " doit être un entier positif ou nul. Valeur par défaut utilisée.");
+            }
+            return defaultValue;
+        }
+        int maxUses = rodConfig.getInt(path);
+        if (maxUses < 0) {
+            warnSetting("rod.yml:" + path,
+                    path + " doit être un entier positif ou nul. Valeur par défaut utilisée.");
+            return defaultValue;
+        }
+        return maxUses;
+    }
+
+    public void initializeRodUses(ItemMeta meta, int rodTier) {
+        int maxUses = getRodMaxUses(rodTier);
+        meta.getPersistentDataContainer().set(rodMaxUsesKey, PersistentDataType.INTEGER, maxUses);
+        meta.getPersistentDataContainer().set(rodUsesRemainingKey, PersistentDataType.INTEGER, maxUses);
+        applyRodLore(meta, rodTier, maxUses, maxUses);
+    }
+
+    public int getRodUsesRemaining(ItemStack rod, int rodTier) {
+        if (rodTier < 1 || !rod.hasItemMeta()) {
+            return -1;
+        }
+        ItemMeta meta = rod.getItemMeta();
+        var data = meta.getPersistentDataContainer();
+        Integer maxUses = data.get(rodMaxUsesKey, PersistentDataType.INTEGER);
+        Integer remaining = data.get(rodUsesRemainingKey, PersistentDataType.INTEGER);
+        if (maxUses == null || remaining == null) {
+            initializeRodUses(meta, rodTier);
+            rod.setItemMeta(meta);
+            int configuredMax = getRodMaxUses(rodTier);
+            return configuredMax == 0 ? -1 : configuredMax;
+        }
+        if (maxUses <= 0) {
+            applyRodLore(meta, rodTier, 0, 0);
+            rod.setItemMeta(meta);
+            return -1;
+        }
+        remaining = Math.clamp(remaining, 0, maxUses);
+        applyRodLore(meta, rodTier, remaining, maxUses);
+        rod.setItemMeta(meta);
+        return remaining;
+    }
+
+    /**
+     * Consomme une utilisation après une prise. Renvoie -1 pour une canne illimitée,
+     * -2 si elle était déjà épuisée, sinon le nombre restant.
+     */
+    public int consumeRodUse(ItemStack rod, int rodTier) {
+        if (rodTier < 1 || !rod.hasItemMeta()) {
+            return -1;
+        }
+        ItemMeta meta = rod.getItemMeta();
+        var data = meta.getPersistentDataContainer();
+        Integer maxUses = data.get(rodMaxUsesKey, PersistentDataType.INTEGER);
+        Integer remaining = data.get(rodUsesRemainingKey, PersistentDataType.INTEGER);
+        if (maxUses == null || remaining == null) {
+            initializeRodUses(meta, rodTier);
+            data = meta.getPersistentDataContainer();
+            maxUses = data.get(rodMaxUsesKey, PersistentDataType.INTEGER);
+            remaining = data.get(rodUsesRemainingKey, PersistentDataType.INTEGER);
+        }
+        if (maxUses == null || maxUses <= 0) {
+            rod.setItemMeta(meta);
+            return -1;
+        }
+        if (remaining == null || remaining <= 0) {
+            return -2;
+        }
+        remaining--;
+        data.set(rodUsesRemainingKey, PersistentDataType.INTEGER, remaining);
+        applyRodLore(meta, rodTier, remaining, maxUses);
+        rod.setItemMeta(meta);
+        return remaining;
+    }
+
+    private void applyRodLore(ItemMeta meta, int rodTier, int remaining, int maxUses) {
+        List<Component> lore = new ArrayList<>();
+        lore.add(deserializeWithoutItalic("&7Palier de pêche : &f" + rodTier));
+        String template = rodConfig.getString("lore",
+                "&7Utilisations restantes : &f{uses}/{max-uses}");
+        String useLine = template.replace("{uses}", maxUses <= 0 ? "∞" : Integer.toString(remaining))
+                .replace("{remaining}", maxUses <= 0 ? "∞" : Integer.toString(remaining))
+                .replace("{max-uses}", maxUses <= 0 ? "∞" : Integer.toString(maxUses))
+                .replace("{maxUse}", maxUses <= 0 ? "∞" : Integer.toString(maxUses));
+        lore.add(deserializeWithoutItalic(useLine));
+        var tierSection = rodConfig.getConfigurationSection("tiers." + rodTier);
+        lore.addAll(fishingEnchantments.applyConfigured(meta, tierSection));
+        meta.lore(lore);
     }
 
     public List<ItemStack> createFishingRods() {
@@ -180,14 +306,19 @@ public final class PecheConfiguration {
                         "Modèle absent ou invalide pour le tier " + tier + " : canne vanilla utilisée.");
             }
             meta.getPersistentDataContainer().set(rodTierKey, PersistentDataType.INTEGER, tier);
-            List<Component> lore = new ArrayList<>();
-            lore.add(deserializeWithoutItalic("&7Palier de pêche : &f" + tier));
-            lore.addAll(fishingEnchantments.applyConfigured(meta, tiers.getConfigurationSection(String.valueOf(tier))));
-            meta.lore(lore);
+            initializeRodUses(meta, tier);
             rod.setItemMeta(meta);
             rods.add(rod);
         }
         return List.copyOf(rods);
+    }
+
+    public List<ItemStack> createFishingEnchantmentBooks() {
+        return fishingEnchantments.createBooks();
+    }
+
+    public FishingEnchantments getFishingEnchantments() {
+        return fishingEnchantments;
     }
 
     public Optional<Material> getCustomFishMaterial() {
@@ -229,10 +360,14 @@ public final class PecheConfiguration {
     private String format(String template, Fish fish, double weight) {
         String rarityColor = settingsConfig.getString("rarity-colors." + fish.rarity().name(), "&7");
         String formattedWeight = BigDecimal.valueOf(weight).stripTrailingZeros().toPlainString();
+        String formattedWeightGrams = Long.toString(Math.round(weight * 1000));
+        template = template.replace("{weight} kg", "{weight_g} g")
+                .replace("{weight}kg", "{weight_g}g");
         return template
                 .replace("{name}", fish.name())
                 .replace("{rarity}", fish.rarity().name())
                 .replace("{weight}", formattedWeight)
+                .replace("{weight_g}", formattedWeightGrams)
                 .replace("{id}", fish.id())
                 .replace("{rarity_color}", rarityColor);
     }
@@ -252,9 +387,86 @@ public final class PecheConfiguration {
         return value;
     }
 
+    private int getIntegerSetting(String path, int defaultValue, int minimum, int maximum) {
+        if (!settingsConfig.isInt(path)) {
+            if (settingsConfig.contains(path)) {
+                warnSetting("settings.yml:" + path,
+                        path + " doit être un entier entre " + minimum + " et " + maximum
+                                + ". Valeur par défaut utilisée.");
+            }
+            return defaultValue;
+        }
+        int value = settingsConfig.getInt(path);
+        if (value < minimum || value > maximum) {
+            warnSetting("settings.yml:" + path,
+                    path + " doit être compris entre " + minimum + " et " + maximum
+                            + ". Valeur par défaut utilisée.");
+            return defaultValue;
+        }
+        return value;
+    }
+
+    private double getDecimalSetting(String path, double defaultValue, double minimum, double maximum) {
+        if (!settingsConfig.isDouble(path) && !settingsConfig.isInt(path)) {
+            if (settingsConfig.contains(path)) {
+                warnSetting("settings.yml:" + path,
+                        path + " doit être un nombre entre " + minimum + " et " + maximum
+                                + ". Valeur par défaut utilisée.");
+            }
+            return defaultValue;
+        }
+        double value = settingsConfig.getDouble(path);
+        if (!Double.isFinite(value) || value < minimum || value > maximum) {
+            warnSetting("settings.yml:" + path,
+                    path + " doit être compris entre " + minimum + " et " + maximum
+                            + ". Valeur par défaut utilisée.");
+            return defaultValue;
+        }
+        return value;
+    }
+
     private void warnSetting(String key, String message) {
         if (warnedSettings.add(key)) {
             plugin.getLogger().warning(message);
         }
+    }
+
+    public double getSellPricePerKg(String rarityName) {
+        String rarityPath = "vente.prix-par-rarete." + rarityName.toLowerCase(Locale.ROOT);
+        double fallback = getNonNegativePrice("vente.prix-par-kg", 10.0);
+        return getNonNegativePrice(rarityPath, fallback);
+    }
+
+    public double getSellBasePrice(String rarityName) {
+        String path = "vente.prix-de-base-par-rarete." + rarityName.toLowerCase(Locale.ROOT);
+        return getNonNegativePrice(path, 0.0);
+    }
+
+    public double getSellPrice(String rarityName, double weight) {
+        if (!Double.isFinite(weight) || weight < 0) {
+            return 0;
+        }
+        return getSellBasePrice(rarityName) + weight * getSellPricePerKg(rarityName);
+    }
+
+    private double getNonNegativePrice(String path, double defaultValue) {
+        if (!settingsConfig.isDouble(path) && !settingsConfig.isInt(path)) {
+            if (settingsConfig.contains(path)) {
+                warnSetting("settings.yml:" + path,
+                        path + " doit être un nombre positif ou nul. Valeur par défaut utilisée.");
+            }
+            return defaultValue;
+        }
+        double value = settingsConfig.getDouble(path);
+        if (!Double.isFinite(value) || value < 0) {
+            warnSetting("settings.yml:" + path,
+                    path + " doit être un nombre positif ou nul. Valeur par défaut utilisée.");
+            return defaultValue;
+        }
+        return value;
+    }
+
+    public String getCurrencySymbol() {
+        return settingsConfig.getString("vente.symbole", "$");
     }
 }

@@ -2,6 +2,11 @@
 # Le tier est stocké dans le tag PDC entier "elestyapeche:rod_tier".
 default:
   weight-multiplier: 1.0
+  max-uses: 100 # 0 = illimitée
+
+# Ligne ajoutée au lore des cannes personnalisées.
+# Placeholders : {uses} = utilisations restantes, {max-uses} = limite (∞ si illimitée).
+lore: "&7Utilisations restantes : &f{uses}/{max-uses}"
 
 tiers:
   # Laisser item-model vide tant que le modèle n'existe pas dans le resource pack.
@@ -10,6 +15,7 @@ tiers:
     item-model: ""
     custom-fish-chance-bonus: 0
     weight-multiplier: 1.0
+    max-uses: 100
     enchants:
       chance: 1
       multi_hamecon: 1
@@ -18,6 +24,7 @@ tiers:
     item-model: ""
     custom-fish-chance-bonus: 5
     weight-multiplier: 1.1
+    max-uses: 100
     enchants:
       chance: 2
       multi_hamecon: 1
@@ -26,6 +33,7 @@ tiers:
     item-model: ""
     custom-fish-chance-bonus: 10
     weight-multiplier: 1.2
+    max-uses: 100
     enchants:
       chance: 2
       gros_poisson: 1
@@ -35,6 +43,7 @@ tiers:
     item-model: ""
     custom-fish-chance-bonus: 15
     weight-multiplier: 1.3
+    max-uses: 100
     enchants:
       chance: 3
       gros_poisson: 2
@@ -44,6 +53,7 @@ tiers:
     item-model: ""
     custom-fish-chance-bonus: 20
     weight-multiplier: 1.5
+    max-uses: 100
     enchants:
       chance: 3
       gros_poisson: 3

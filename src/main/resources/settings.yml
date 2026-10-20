@@ -3,8 +3,22 @@
 custom-fish-chance: 50
 custom-fish-item: COD
 
+# Paramètres des hameçons multi-hameçon et des logs.
+fishing:
+  bite-window-ticks: 60
+  hook-spacing: 5.0
+  hook-spacing-step: 5.0
+  hook-stagger: 5.0
+  debug: true
+
+# Zone facultative de cercles de rareté, gérée avec /adminpeche tools.
+fishing-tools:
+  enabled: false
+  zone: {}
+
 # Probabilités de rareté parmi les poissons personnalisés.
-# La somme doit être inférieure ou égale à 100; le reste conserve le poisson vanilla.
+# Via le GUI, modifier une rareté redistribue le reste proportionnellement
+# aux autres raretés, afin que le total reste à 100 %.
 rarity-chances:
   BASIQUE: 55
   BRILLANT: 25
@@ -19,8 +33,27 @@ rarity-colors:
   LEGENDAIRE: "&6"
   MYSTIQUE: "&d"
 
-# Codes couleur Minecraft (&) et placeholders : {name}, {id}, {rarity}, {weight}, {rarity_color}.
+# Codes couleur Minecraft (&) et placeholders : {name}, {id}, {rarity}, {weight} en kg,
+# {weight_g} en grammes, {rarity_color}.
 messages:
   fish-name: "&f&l{name}"
   fish-rarity: "&7Rareté : {rarity_color}&l{rarity}"
-  fish-weight: "&7Poids : &f{weight} kg"
+  fish-weight: "&7Poids : &f{weight_g} g"
+
+vente:
+  prix-par-kg: 10.0
+  symbole: "$"
+  # Valeur finale = prix de base selon la rareté + (poids x prix par kg).
+  prix-de-base-par-rarete:
+    basique: 5.0
+    brillant: 15.0
+    epique: 40.0
+    legendaire: 100.0
+    mystique: 250.0
+  # Prix par kilogramme selon la rareté (prix-par-kg est le fallback).
+  prix-par-rarete:
+    basique: 8.0
+    brillant: 20.0
+    epique: 10.0
+    legendaire: 10.0
+    mystique: 10.0

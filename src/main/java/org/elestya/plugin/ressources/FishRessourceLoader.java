@@ -82,6 +82,8 @@ public class FishRessourceLoader {
         plugin.getLogger().info(loadedFishes.size() + " poisson(s) chargé(s)");
     }
 
+
+
     public Optional<Fish> get(String id) {
         return Optional.ofNullable(loadedFishes.get(id));
     }

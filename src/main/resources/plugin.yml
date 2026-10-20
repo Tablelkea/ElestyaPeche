@@ -8,9 +8,9 @@ load: POSTWORLD
 authors: [ TablePasDroite ]
 
 commands:
-  fish:
-    description: Commandes de pêche
-    usage: /fish <reload|item>
+  adminpeche:
+    description: Configuration et zones de pêche
+    usage: /adminpeche <config|tools|books|items>
     permission: elestyapeche.admin
 
 permissions:
