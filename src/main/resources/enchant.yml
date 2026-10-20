@@ -1,0 +1,40 @@
+# Enchantements custom attribuables aux cannes dans rod.yml.
+# custom-fish-chance-bonus est en points de pourcentage.
+# weight-bias doit être entre 0 et 1 et favorise les prises proches du poids maximum de l'espèce.
+enchants:
+  chance:
+    display-name: "&bChance"
+    max-level: 3
+    levels:
+      1:
+        custom-fish-chance-bonus: 2
+        weight-bias: 0
+      2:
+        custom-fish-chance-bonus: 5
+        weight-bias: 0
+      3:
+        custom-fish-chance-bonus: 8
+        weight-bias: 0
+  gros_poisson:
+    display-name: "&6Gros poisson"
+    max-level: 3
+    levels:
+      1:
+        custom-fish-chance-bonus: 0
+        weight-bias: 0.2
+      2:
+        custom-fish-chance-bonus: 0
+        weight-bias: 0.5
+      3:
+        custom-fish-chance-bonus: 0
+        weight-bias: 1.0
+  multi_hamecon:
+    display-name: "&dMulti-hameçon"
+    max-level: 3
+    levels:
+      1:
+        hooks-per-catch: 2
+      2:
+        hooks-per-catch: 3
+      3:
+        hooks-per-catch: 5

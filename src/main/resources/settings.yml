@@ -1,0 +1,26 @@
+# Paramètres généraux de pêche.
+# Pourcentages entre 0 et 100.
+custom-fish-chance: 50
+custom-fish-item: COD
+
+# Probabilités de rareté parmi les poissons personnalisés.
+# La somme doit être inférieure ou égale à 100; le reste conserve le poisson vanilla.
+rarity-chances:
+  BASIQUE: 55
+  BRILLANT: 25
+  EPIQUE: 12
+  LEGENDAIRE: 5
+  MYSTIQUE: 3
+
+rarity-colors:
+  BASIQUE: "&7"
+  BRILLANT: "&b"
+  EPIQUE: "&5"
+  LEGENDAIRE: "&6"
+  MYSTIQUE: "&d"
+
+# Codes couleur Minecraft (&) et placeholders : {name}, {id}, {rarity}, {weight}, {rarity_color}.
+messages:
+  fish-name: "&f&l{name}"
+  fish-rarity: "&7Rareté : {rarity_color}&l{rarity}"
+  fish-weight: "&7Poids : &f{weight} kg"

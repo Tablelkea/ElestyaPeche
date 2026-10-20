@@ -1,0 +1,50 @@
+# Paramètres des cannes personnalisées.
+# Le tier est stocké dans le tag PDC entier "elestyapeche:rod_tier".
+default:
+  weight-multiplier: 1.0
+
+tiers:
+  # Laisser item-model vide tant que le modèle n'existe pas dans le resource pack.
+  1:
+    name: "&7Canne basique"
+    item-model: ""
+    custom-fish-chance-bonus: 0
+    weight-multiplier: 1.0
+    enchants:
+      chance: 1
+      multi_hamecon: 1
+  2:
+    name: "&bCanne brillante"
+    item-model: ""
+    custom-fish-chance-bonus: 5
+    weight-multiplier: 1.1
+    enchants:
+      chance: 2
+      multi_hamecon: 1
+  3:
+    name: "&5Canne épique"
+    item-model: ""
+    custom-fish-chance-bonus: 10
+    weight-multiplier: 1.2
+    enchants:
+      chance: 2
+      gros_poisson: 1
+      multi_hamecon: 2
+  4:
+    name: "&6Canne légendaire"
+    item-model: ""
+    custom-fish-chance-bonus: 15
+    weight-multiplier: 1.3
+    enchants:
+      chance: 3
+      gros_poisson: 2
+      multi_hamecon: 2
+  5:
+    name: "&dCanne mystique"
+    item-model: ""
+    custom-fish-chance-bonus: 20
+    weight-multiplier: 1.5
+    enchants:
+      chance: 3
+      gros_poisson: 3
+      multi_hamecon: 3

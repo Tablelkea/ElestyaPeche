@@ -1,0 +1,192 @@
+# wmin et wmax sont en kilogrammes. Les poissons de moins d'1 kg sont tirés au centième,
+# les autres au dixième. Les bornes doivent refléter la taille réaliste de l'espèce.
+fishes:
+  carpe:
+    name: "Carpe"
+    rarity: BASIQUE
+    wmin: 0.5
+    wmax: 8.0
+    model: "elestya:fish_rond_01"
+    texture: "elestya:fish_rond_01_texture"
+  saumon:
+    name: "Saumon"
+    rarity: BRILLANT
+    wmin: 1.0
+    wmax: 8.0
+    model: "elestya:fish_petit_fin_01"
+    texture: "elestya:fish_petit_fin_01_texture"
+  sardine_basique:
+    name: "Sardine basique"
+    rarity: BASIQUE
+    wmin: 0.03
+    wmax: 0.08
+    model: "elestya:fish_sardine_basique"
+    texture: "elestya:fish_sardine_basique_texture"
+  sardine_brillant:
+    name: "Sardine brillante"
+    rarity: BRILLANT
+    wmin: 0.04
+    wmax: 0.10
+    model: "elestya:fish_sardine_brillant"
+    texture: "elestya:fish_sardine_brillant_texture"
+  sardine_epique:
+    name: "Sardine épique"
+    rarity: EPIQUE
+    wmin: 0.05
+    wmax: 0.12
+    model: "elestya:fish_sardine_epique"
+    texture: "elestya:fish_sardine_epique_texture"
+  sardine_legendaire:
+    name: "Sardine légendaire"
+    rarity: LEGENDAIRE
+    wmin: 0.06
+    wmax: 0.14
+    model: "elestya:fish_sardine_legendaire"
+    texture: "elestya:fish_sardine_legendaire_texture"
+  sardine_mystique:
+    name: "Sardine mystique"
+    rarity: MYSTIQUE
+    wmin: 0.07
+    wmax: 0.15
+    model: "elestya:fish_sardine_mystique"
+    texture: "elestya:fish_sardine_mystique_texture"
+  anguille_basique:
+    name: "Anguille basique"
+    rarity: BASIQUE
+    wmin: 0.2
+    wmax: 2.0
+    model: "elestya:fish_anguille_basique"
+    texture: "elestya:fish_anguille_basique_texture"
+  anguille_brillant:
+    name: "Anguille brillante"
+    rarity: BRILLANT
+    wmin: 0.3
+    wmax: 3.0
+    model: "elestya:fish_anguille_brillant"
+    texture: "elestya:fish_anguille_brillant_texture"
+  anguille_epique:
+    name: "Anguille épique"
+    rarity: EPIQUE
+    wmin: 0.5
+    wmax: 4.0
+    model: "elestya:fish_anguille_epique"
+    texture: "elestya:fish_anguille_epique_texture"
+  anguille_legendaire:
+    name: "Anguille légendaire"
+    rarity: LEGENDAIRE
+    wmin: 0.7
+    wmax: 5.0
+    model: "elestya:fish_anguille_legendaire"
+    texture: "elestya:fish_anguille_legendaire_texture"
+  anguille_mystique:
+    name: "Anguille mystique"
+    rarity: MYSTIQUE
+    wmin: 1.0
+    wmax: 6.0
+    model: "elestya:fish_anguille_mystique"
+    texture: "elestya:fish_anguille_mystique_texture"
+  sole_basique:
+    name: "Sole basique"
+    rarity: BASIQUE
+    wmin: 0.15
+    wmax: 0.5
+    model: "elestya:fish_sole_basique"
+    texture: "elestya:fish_sole_basique_texture"
+  sole_brillant:
+    name: "Sole brillante"
+    rarity: BRILLANT
+    wmin: 0.2
+    wmax: 0.7
+    model: "elestya:fish_sole_brillant"
+    texture: "elestya:fish_sole_brillant_texture"
+  sole_epique:
+    name: "Sole épique"
+    rarity: EPIQUE
+    wmin: 0.3
+    wmax: 0.9
+    model: "elestya:fish_sole_epique"
+    texture: "elestya:fish_sole_epique_texture"
+  sole_legendaire:
+    name: "Sole légendaire"
+    rarity: LEGENDAIRE
+    wmin: 0.4
+    wmax: 1.2
+    model: "elestya:fish_sole_legendaire"
+    texture: "elestya:fish_sole_legendaire_texture"
+  sole_mystique:
+    name: "Sole mystique"
+    rarity: MYSTIQUE
+    wmin: 0.5
+    wmax: 1.5
+    model: "elestya:fish_sole_mystique"
+    texture: "elestya:fish_sole_mystique_texture"
+  thon_basique:
+    name: "Thon basique"
+    rarity: BASIQUE
+    wmin: 5.0
+    wmax: 20.0
+    model: "elestya:fish_thon_basique"
+    texture: "elestya:fish_thon_basique_texture"
+  thon_brillant:
+    name: "Thon brillant"
+    rarity: BRILLANT
+    wmin: 10.0
+    wmax: 35.0
+    model: "elestya:fish_thon_brillant"
+    texture: "elestya:fish_thon_brillant_texture"
+  thon_epique:
+    name: "Thon épique"
+    rarity: EPIQUE
+    wmin: 20.0
+    wmax: 60.0
+    model: "elestya:fish_thon_epique"
+    texture: "elestya:fish_thon_epique_texture"
+  thon_legendaire:
+    name: "Thon légendaire"
+    rarity: LEGENDAIRE
+    wmin: 30.0
+    wmax: 100.0
+    model: "elestya:fish_thon_legendaire"
+    texture: "elestya:fish_thon_legendaire_texture"
+  thon_mystique:
+    name: "Thon mystique"
+    rarity: MYSTIQUE
+    wmin: 50.0
+    wmax: 200.0
+    model: "elestya:fish_thon_mystique"
+    texture: "elestya:fish_thon_mystique_texture"
+  poisson_lune_basique:
+    name: "Poisson-lune basique"
+    rarity: BASIQUE
+    wmin: 0.5
+    wmax: 10.0
+    model: "elestya:fish_poisson_lune_basique"
+    texture: "elestya:fish_poisson_lune_basique_texture"
+  poisson_lune_brillant:
+    name: "Poisson-lune brillant"
+    rarity: BRILLANT
+    wmin: 5.0
+    wmax: 20.0
+    model: "elestya:fish_poisson_lune_brillant"
+    texture: "elestya:fish_poisson_lune_brillant_texture"
+  poisson_lune_epique:
+    name: "Poisson-lune épique"
+    rarity: EPIQUE
+    wmin: 10.0
+    wmax: 50.0
+    model: "elestya:fish_poisson_lune_epique"
+    texture: "elestya:fish_poisson_lune_epique_texture"
+  poisson_lune_legendaire:
+    name: "Poisson-lune légendaire"
+    rarity: LEGENDAIRE
+    wmin: 25.0
+    wmax: 100.0
+    model: "elestya:fish_poisson_lune_legendaire"
+    texture: "elestya:fish_poisson_lune_legendaire_texture"
+  poisson_lune_mystique:
+    name: "Poisson-lune mystique"
+    rarity: MYSTIQUE
+    wmin: 50.0
+    wmax: 200.0
+    model: "elestya:fish_poisson_lune_mystique"
+    texture: "elestya:fish_poisson_lune_mystique_texture"

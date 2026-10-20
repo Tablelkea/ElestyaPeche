@@ -1,0 +1,19 @@
+name: ElestyaPeche
+version: '${version}'
+
+main: org.elestya.plugin.ElestyaPeche
+api-version: '1.21.11'
+load: POSTWORLD
+
+authors: [ TablePasDroite ]
+
+commands:
+  fish:
+    description: Commandes de pêche
+    usage: /fish <reload|item>
+    permission: elestyapeche.admin
+
+permissions:
+  elestyapeche.admin:
+    description: Autorise la gestion de la configuration de pêche
+    default: op
